@@ -1,0 +1,543 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Production-like anonymized AWS Windows Server internal load balancer PoC.
+  This template uses sample names and parameters only. Do not use it as-is for
+  a real production environment.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: aws-windows-ilb-poc
+    MaxLength: 20
+    AllowedPattern: '^[a-z0-9-]+$'
+    Description: Prefix used for resource names.
+
+  EnvironmentName:
+    Type: String
+    Default: prod
+    MaxLength: 8
+    AllowedPattern: '^[a-z0-9-]+$'
+    Description: Environment identifier used for tags and names.
+
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: CIDR block for the VPC.
+
+  PublicSubnetACidr:
+    Type: String
+    Default: 10.0.0.0/24
+    Description: CIDR block for the public subnet in AZ A.
+
+  PublicSubnetCCidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: CIDR block for the public subnet in AZ C.
+
+  PrivateAppSubnetACidr:
+    Type: String
+    Default: 10.0.10.0/24
+    Description: CIDR block for the private application subnet in AZ A.
+
+  PrivateAppSubnetCCidr:
+    Type: String
+    Default: 10.0.11.0/24
+    Description: CIDR block for the private application subnet in AZ C.
+
+  PrivateDbSubnetACidr:
+    Type: String
+    Default: 10.0.20.0/24
+    Description: CIDR block for the private DB subnet in AZ A.
+
+  PrivateDbSubnetCCidr:
+    Type: String
+    Default: 10.0.21.0/24
+    Description: CIDR block for the private DB subnet in AZ C.
+
+  AllowedAdminCidr:
+    Type: String
+    AllowedPattern: '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'
+    Description: Administrator source CIDR for RDP access to the bastion host.
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 key pair name for Windows and bastion instances.
+
+  WindowsAmiId:
+    Type: AWS::EC2::Image::Id
+    Description: Windows Server AMI ID for application servers.
+
+  BastionAmiId:
+    Type: AWS::EC2::Image::Id
+    Description: Windows Server AMI ID for the bastion host.
+
+  BastionInstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues:
+      - t3.small
+      - t3.medium
+      - t3.large
+    Description: EC2 instance type for the bastion host.
+
+  WindowsInstanceType:
+    Type: String
+    Default: t3.medium
+    AllowedValues:
+      - t3.medium
+      - t3.large
+      - m6i.large
+      - m6i.xlarge
+      - m6a.large
+      - m6a.xlarge
+    Description: EC2 instance type for Windows application servers.
+
+  DbInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    AllowedValues:
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.m6i.large
+    Description: RDS instance class for the sample database.
+
+  DbEngine:
+    Type: String
+    Default: mysql
+    AllowedValues:
+      - mysql
+      - postgres
+    Description: Sample RDS engine for this public PoC template.
+
+  DbName:
+    Type: String
+    Default: appdb
+    AllowedPattern: '^[a-zA-Z][a-zA-Z0-9_]{0,63}$'
+    Description: Initial database name.
+
+  DbPort:
+    Type: Number
+    Default: 3306
+    MinValue: 1
+    MaxValue: 65535
+    Description: Database listener port allowed from Windows application servers.
+
+  DbMasterUsername:
+    Type: String
+    Default: dbadmin
+    AllowedPattern: '^[a-zA-Z][a-zA-Z0-9_]{0,15}$'
+    Description: RDS master username.
+
+  DbMasterPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    MaxLength: 41
+    AllowedPattern: '^[a-zA-Z0-9!#$%&()*+,-.:;<=>?@\[\]^_{|}~]+$'
+    Description: RDS master password. Use Secrets Manager or a secure process in real environments.
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-vpc'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-igw'
+
+  VpcGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PublicSubnetACidr
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-public-subnet-a'
+
+  PublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PublicSubnetCCidr
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-public-subnet-c'
+
+  PrivateAppSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PrivateAppSubnetACidr
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-private-app-subnet-a'
+
+  PrivateAppSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PrivateAppSubnetCCidr
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-private-app-subnet-c'
+
+  PrivateDbSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PrivateDbSubnetACidr
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-private-db-subnet-a'
+
+  PrivateDbSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PrivateDbSubnetCCidr
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-private-db-subnet-c'
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-public-rtb'
+
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VpcGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetC
+      RouteTableId: !Ref PublicRouteTable
+
+  NatEipA:
+    Type: AWS::EC2::EIP
+    DependsOn: VpcGatewayAttachment
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-nat-eip-a'
+
+  NatGatewayA:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEipA.AllocationId
+      SubnetId: !Ref PublicSubnetA
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-nat-a'
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-private-rtb'
+
+  PrivateDefaultRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayA
+
+  PrivateAppSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateAppSubnetA
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateAppSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateAppSubnetC
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateDbSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateDbSubnetA
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateDbSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateDbSubnetC
+      RouteTableId: !Ref PrivateRouteTable
+
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow administrator RDP access to the bastion host.
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: !Ref AllowedAdminCidr
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-bastion-sg'
+
+  InternalAlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP access to the internal load balancer from the VPC.
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref VpcCidr
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-internal-alb-sg'
+
+  WindowsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow traffic from internal ALB and RDP from bastion.
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref InternalAlbSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          SourceSecurityGroupId: !Ref BastionSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-windows-sg'
+
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow database access from Windows application servers.
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref DbPort
+          ToPort: !Ref DbPort
+          SourceSecurityGroupId: !Ref WindowsSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-db-sg'
+
+  BastionInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref BastionAmiId
+      InstanceType: !Ref BastionInstanceType
+      KeyName: !Ref KeyName
+      SubnetId: !Ref PublicSubnetA
+      SecurityGroupIds:
+        - !Ref BastionSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-bastion-01'
+
+  WindowsInstanceA:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref WindowsAmiId
+      InstanceType: !Ref WindowsInstanceType
+      KeyName: !Ref KeyName
+      SubnetId: !Ref PrivateAppSubnetA
+      SecurityGroupIds:
+        - !Ref WindowsSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          Install-WindowsFeature -Name Web-Server -IncludeManagementTools
+          Set-Content -Path C:\inetpub\wwwroot\index.html -Value "aws-windows-ilb-poc ${EnvironmentName} windows-app-01"
+          </powershell>
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-windows-app-01'
+
+  WindowsInstanceC:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref WindowsAmiId
+      InstanceType: !Ref WindowsInstanceType
+      KeyName: !Ref KeyName
+      SubnetId: !Ref PrivateAppSubnetC
+      SecurityGroupIds:
+        - !Ref WindowsSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          Install-WindowsFeature -Name Web-Server -IncludeManagementTools
+          Set-Content -Path C:\inetpub\wwwroot\index.html -Value "aws-windows-ilb-poc ${EnvironmentName} windows-app-02"
+          </powershell>
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-windows-app-02'
+
+  InternalLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${ProjectName}-${EnvironmentName}-ilb'
+      Scheme: internal
+      Type: application
+      SecurityGroups:
+        - !Ref InternalAlbSecurityGroup
+      Subnets:
+        - !Ref PrivateAppSubnetA
+        - !Ref PrivateAppSubnetC
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-ilb'
+
+  InternalTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${ProjectName}-${EnvironmentName}-tg'
+      VpcId: !Ref Vpc
+      Protocol: HTTP
+      Port: 80
+      TargetType: instance
+      HealthCheckEnabled: true
+      HealthCheckPath: /
+      Matcher:
+        HttpCode: 200-399
+      Targets:
+        - Id: !Ref WindowsInstanceA
+          Port: 80
+        - Id: !Ref WindowsInstanceC
+          Port: 80
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-tg'
+
+  InternalListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref InternalLoadBalancer
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref InternalTargetGroup
+
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private DB subnet group for the PoC database.
+      SubnetIds:
+        - !Ref PrivateDbSubnetA
+        - !Ref PrivateDbSubnetC
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-db-subnet-group'
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub '${ProjectName}-${EnvironmentName}-db'
+      DBInstanceClass: !Ref DbInstanceClass
+      Engine: !Ref DbEngine
+      Port: !Ref DbPort
+      AllocatedStorage: 20
+      StorageType: gp3
+      DBName: !Ref DbName
+      MasterUsername: !Ref DbMasterUsername
+      MasterUserPassword: !Ref DbMasterPassword
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DbSecurityGroup
+      PubliclyAccessible: false
+      MultiAZ: false
+      BackupRetentionPeriod: 7
+      DeletionProtection: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${EnvironmentName}-db'
+
+Outputs:
+  VpcId:
+    Description: VPC ID.
+    Value: !Ref Vpc
+
+  BastionPublicIp:
+    Description: Public IP address of the bastion host.
+    Value: !GetAtt BastionInstance.PublicIp
+
+  InternalLoadBalancerDnsName:
+    Description: Internal load balancer DNS name.
+    Value: !GetAtt InternalLoadBalancer.DNSName
+
+  WindowsInstanceAId:
+    Description: Windows application server 01 instance ID.
+    Value: !Ref WindowsInstanceA
+
+  WindowsInstanceCId:
+    Description: Windows application server 02 instance ID.
+    Value: !Ref WindowsInstanceC
+
+  DatabaseEndpoint:
+    Description: RDS endpoint address.
+    Value: !GetAtt Database.Endpoint.Address

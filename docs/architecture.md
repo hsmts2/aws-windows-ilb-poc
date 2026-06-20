@@ -60,6 +60,12 @@ flowchart TB
 | RDS | アプリケーション用データベース |
 | Security Group | 通信元、通信先、ポートを役割単位で制御 |
 
+## CloudFormationサンプルの補足
+
+[templates/prod-windows-ilb.yaml](../templates/prod-windows-ilb.yaml) では、Windows Server 2台にUserDataでIISと簡易HTMLを配置します。
+
+これは公開用PoCとして、Internal Load Balancer のヘルスチェックと振り分けを確認しやすくするための最小実装です。実務構成のアプリケーションや設定を再現するものではありません。
+
 ## 公開用に抽象化した点
 
 | 実務構成に含まれる可能性がある情報 | 公開用での扱い |

@@ -6,6 +6,8 @@ Thumbs.db
 # Secrets and private keys
 .env
 .env.*
+parameters/*.json
+!parameters/*.example.json
 *.pem
 *.key
 *.p12
