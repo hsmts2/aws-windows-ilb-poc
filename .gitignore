@@ -1,0 +1,28 @@
+# Local/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Secrets and private keys
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# Original business artifacts
+*.ppt
+*.pptx
+*.doc
+*.docx
+*.xlsx
+*.xls
+*.pdf
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
