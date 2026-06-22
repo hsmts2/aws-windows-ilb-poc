@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Production-like Windows ILB architecture</title>
+  <desc id="desc">Public architecture diagram for the production-like environment.</desc>
+  <defs>
+    <style>
+      .frame { fill: #ffffff; stroke: #1f2937; stroke-width: 2; }
+      .vpc { fill: #fafafa; stroke: #7c3aed; stroke-width: 2; }
+      .az { fill: none; stroke: #0891b2; stroke-width: 2; stroke-dasharray: 8 6; }
+      .public { fill: #ecfdf5; stroke: #16a34a; stroke-width: 1.5; }
+      .private { fill: #eff6ff; stroke: #0284c7; stroke-width: 1.5; }
+      .db { fill: #fef3c7; stroke: #d97706; stroke-width: 1.5; }
+      .service { fill: #fff7ed; stroke: #f97316; stroke-width: 1.5; }
+      .lb { fill: #fce7f3; stroke: #db2777; stroke-width: 1.5; }
+      .text { font-family: Arial, "Yu Gothic", sans-serif; fill: #111827; font-size: 18px; }
+      .small { font-size: 15px; }
+      .tiny { font-size: 13px; }
+      .title { font-size: 28px; font-weight: 700; }
+      .label { font-size: 18px; font-weight: 700; }
+      .line { stroke: #334155; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #64748b; stroke-width: 2; fill: none; stroke-dasharray: 6 5; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#334155" />
+    </marker>
+  </defs>
+
+  <rect x="20" y="20" width="1160" height="720" class="frame" />
+  <text x="48" y="68" class="text title">Production-like Environment</text>
+  <text x="48" y="96" class="text small">VPC: production-vpc / 172.28.32.0/20</text>
+
+  <rect x="190" y="115" width="940" height="570" class="vpc" />
+  <text x="215" y="150" class="text label">AWS Cloud</text>
+
+  <rect x="250" y="170" width="405" height="470" class="az" />
+  <rect x="680" y="170" width="405" height="470" class="az" />
+  <text x="370" y="198" class="text label" fill="#0891b2">ap-northeast-1a</text>
+  <text x="800" y="198" class="text label" fill="#0891b2">ap-northeast-1c</text>
+
+  <rect x="280" y="225" width="340" height="90" rx="4" class="public" />
+  <text x="300" y="255" class="text label">production-public-subnet-a</text>
+  <text x="300" y="285" class="text small">172.28.32.0/24</text>
+  <text x="520" y="285" class="text small">NAT A</text>
+
+  <rect x="710" y="225" width="340" height="90" rx="4" class="public" />
+  <text x="730" y="255" class="text label">production-public-subnet-c</text>
+  <text x="730" y="285" class="text small">172.28.33.0/24</text>
+  <text x="950" y="285" class="text small">NAT C</text>
+
+  <rect x="280" y="340" width="340" height="110" rx="4" class="private" />
+  <text x="300" y="370" class="text label">production-private-app-subnet-a</text>
+  <text x="300" y="400" class="text small">172.28.34.0/24</text>
+  <text x="455" y="400" class="text small">Linux App 01 / Windows App 01</text>
+
+  <rect x="710" y="340" width="340" height="110" rx="4" class="private" />
+  <text x="730" y="370" class="text label">production-private-app-subnet-c</text>
+  <text x="730" y="400" class="text small">172.28.35.0/24</text>
+  <text x="885" y="400" class="text small">Linux App 02 / Windows App 02</text>
+
+  <rect x="280" y="480" width="340" height="110" rx="4" class="db" />
+  <text x="300" y="510" class="text label">production-private-db-subnet-a</text>
+  <text x="300" y="540" class="text small">172.28.36.0/24</text>
+  <text x="485" y="540" class="text small">RDS primary</text>
+
+  <rect x="710" y="480" width="340" height="110" rx="4" class="db" />
+  <text x="730" y="510" class="text label">production-private-db-subnet-c</text>
+  <text x="730" y="540" class="text small">172.28.37.0/24</text>
+  <text x="915" y="540" class="text small">RDS standby</text>
+
+  <rect x="48" y="250" width="115" height="64" rx="6" class="service" />
+  <text x="76" y="278" class="text label">User</text>
+  <text x="62" y="300" class="text tiny">authenticated</text>
+
+  <rect x="48" y="370" width="115" height="64" rx="6" class="service" />
+  <text x="72" y="398" class="text label">Admin</text>
+  <text x="66" y="420" class="text tiny">bastion SSH</text>
+
+  <rect x="430" y="300" width="260" height="54" rx="6" class="lb" />
+  <text x="458" y="334" class="text label">production-app-ilb</text>
+
+  <rect x="650" y="300" width="285" height="54" rx="6" class="lb" />
+  <text x="678" y="334" class="text label">production-windows-ilb</text>
+
+  <path d="M163 282 C210 282, 225 270, 280 270" class="line" />
+  <path d="M163 402 C210 402, 225 270, 280 270" class="dash" />
+  <path d="M560 354 C560 370, 520 385, 520 400" class="line" />
+  <path d="M795 354 C795 370, 850 385, 850 400" class="line" />
+  <path d="M520 450 C520 470, 520 495, 520 535" class="dash" />
+  <path d="M850 450 C850 470, 850 495, 850 535" class="dash" />
+  <path d="M620 535 C660 535, 680 535, 710 535" class="dash" />
+
+  <text x="48" y="705" class="text tiny">Public-safe names are used. Instance IDs, public IPs, customer names, and project-specific identifiers are intentionally omitted.</text>
+</svg>

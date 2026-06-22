@@ -2,38 +2,63 @@
 
 ## 概要
 
-このドキュメントでは、Windows Server を含む業務アプリケーション基盤を、公開可能なケーススタディとして抽象化しています。
+このドキュメントでは、Windows Server と内部ロードバランサーを含む AWS 基盤構成を、公開可能なケーススタディとして整理します。
 
-実環境のリソース名、IPアドレス、インスタンスID、顧客情報、拠点情報は記載しません。
+実環境のリソース名、インスタンス ID、グローバル IP、顧客情報、拠点情報は記載せず、構成要素と設計意図が伝わる範囲に抽象化しています。
 
-## 想定アーキテクチャ
+<br>
 
-```mermaid
-flowchart TB
-  user["利用者 / 接続元"]
-  public["Public Subnet\n踏み台 / NAT"]
-  ilb["Internal Load Balancer"]
-  app1["Windows Server 01\nPrivate Subnet"]
-  app2["Windows Server 02\nPrivate Subnet"]
-  db["RDS\nPrivate Subnet"]
+## 検証環境
 
-  user --> public
-  public --> ilb
-  ilb --> app1
-  ilb --> app2
-  app1 --> db
-  app2 --> db
-```
+<img src="../diagrams/windows-ilb-validation-architecture.svg" alt="Validation Windows ILB architecture" width="900">
 
-## 検証環境と本番相当環境
+検証環境は、接続経路、アプリケーション動作、DB接続を確認するための最小構成です。
+
+| 項目 | 内容 |
+| --- | --- |
+| VPC CIDR | `172.28.48.0/20` |
+| Public Subnet | `172.28.48.0/24` / `172.28.49.0/24` |
+| Private App Subnet | `172.28.50.0/24` / `172.28.51.0/24` |
+| Private DB Subnet | `172.28.52.0/24` / `172.28.53.0/24` |
+| Linux Server | 1台 |
+| Windows Server | 1台 |
+| Internal ALB | Linux 用 / Windows 用 |
+| RDS | PostgreSQL / Single-AZ |
+
+<br>
+
+## 本番相当環境
+
+<img src="../diagrams/windows-ilb-production-architecture.svg" alt="Production-like Windows ILB architecture" width="900">
+
+本番相当環境は、2AZ 構成、NAT Gateway x2、Linux / Windows Server の複数台構成、RDS Multi-AZ を前提にしています。
+
+| 項目 | 内容 |
+| --- | --- |
+| VPC CIDR | `172.28.32.0/20` |
+| Public Subnet | `172.28.32.0/24` / `172.28.33.0/24` |
+| Private App Subnet | `172.28.34.0/24` / `172.28.35.0/24` |
+| Private DB Subnet | `172.28.36.0/24` / `172.28.37.0/24` |
+| NAT Gateway | AZごとに1台 |
+| Linux Server | 2台 |
+| Windows Server | 2台 |
+| Internal ALB | Linux 用 / Windows 用 |
+| RDS | PostgreSQL / Multi-AZ |
+
+<br>
+
+## 環境差分
 
 | 観点 | 検証環境 | 本番相当環境 |
 | --- | --- | --- |
 | 目的 | 接続経路、アプリケーション動作、DB接続の確認 | 可用性、運用性、障害時の影響範囲を考慮した構成 |
-| サーバー台数 | 最小構成 | 複数台構成 |
-| ロードバランサー | 必要最小限または未使用 | 内部ロードバランサーでPrivate Subnet内の通信を集約 |
-| ネットワーク | 構成確認を重視 | Public / Private Subnet 分離を重視 |
-| 運用 | 手順確認 | メンテナンス、切り離し、障害時対応を考慮 |
+| サーバー台数 | Linux / Windows をそれぞれ最小構成 | Linux / Windows をそれぞれ 2AZ に配置 |
+| NAT Gateway | 最小構成 | AZごとに配置 |
+| Load Balancer | 動作確認用 | Linux / Windows の接続先を内部LBへ集約 |
+| RDS | Single-AZ | Multi-AZ |
+| 運用 | 手順確認を重視 | メンテナンス、切り離し、障害時対応を考慮 |
+
+<br>
 
 ## 内部ロードバランサーの設計意図
 
@@ -41,38 +66,47 @@ flowchart TB
 
 | 理由 | 内容 |
 | --- | --- |
-| 非公開構成 | Windows ServerをPrivate Subnetに配置し、インターネットから直接到達させない |
-| 可用性 | 複数台のWindows Serverへ通信を分散する |
+| 非公開構成 | Linux / Windows Server を Private Subnet に配置し、インターネットから直接到達させない |
+| 可用性 | 複数台のサーバーへ通信を分散する |
 | 固定接続先 | 利用側は個別サーバーではなく、内部LBのDNS名を接続先にできる |
 | ヘルスチェック | 異常なインスタンスを振り分け対象から外せる |
 | メンテナンス性 | 対象サーバーをLB配下から外し、影響範囲を抑えて作業できる |
-| セキュリティ境界 | Public Subnet、Private Subnet、DB層の責務を分離できる |
+| セキュリティ境界 | Public Subnet、Private App Subnet、Private DB Subnet の責務を分離できる |
 
-## 主なAWSリソース
+<br>
+
+## 主な AWS リソース
 
 | リソース | 役割 |
 | --- | --- |
 | VPC | システム全体のネットワーク境界 |
-| Public Subnet | 踏み台やNATなど、外部接続を扱うリソースを配置 |
-| Private Subnet | Windows ServerやDB接続先を配置 |
-| Internal Load Balancer | Private Subnet内のアプリケーション層へ内部向けに負荷分散 |
-| EC2 | Windows Server、踏み台、アプリケーションサーバー |
+| Public Subnet | 踏み台、NAT Gateway など外部接続を扱うリソースを配置 |
+| Private App Subnet | Linux / Windows Server を配置 |
+| Private DB Subnet | RDS を配置 |
+| Internal ALB | Private Subnet 内のアプリケーション層へ内部向けに負荷分散 |
+| EC2 | 踏み台、Linux Server、Windows Server |
 | RDS | アプリケーション用データベース |
 | Security Group | 通信元、通信先、ポートを役割単位で制御 |
 
-## CloudFormationサンプルの補足
+<br>
 
-[templates/prod-windows-ilb.yaml](../templates/prod-windows-ilb.yaml) では、Windows Server 2台にUserDataでIISと簡易HTMLを配置します。
+## CloudFormation サンプルの補足
 
-これは公開用PoCとして、Internal Load Balancer のヘルスチェックと振り分けを確認しやすくするための最小実装です。実務構成のアプリケーションや設定を再現するものではありません。
+[templates/prod-windows-ilb.yaml](../templates/prod-windows-ilb.yaml) では、本番相当環境をもとにした構成を作成します。
+
+Linux Server には Apache HTTP Server、Windows Server には IIS と簡易HTMLを配置します。
+
+これは公開用 PoC として、Internal Load Balancer のヘルスチェックと振り分けを確認しやすくするための最小実装です。実務構成のアプリケーションや設定を再現するものではありません。
+
+<br>
 
 ## 公開用に抽象化した点
 
 | 実務構成に含まれる可能性がある情報 | 公開用での扱い |
 | --- | --- |
-| 実リソース名 | サンプル名へ置換 |
-| 実CIDR / IPアドレス | サンプルCIDRへ置換 |
+| 実リソース名 | 役割ベースのサンプル名へ置換 |
 | EC2インスタンスID | 記載しない |
+| グローバルIPアドレス | 記載しない |
 | 顧客名 / 案件名 / 拠点名 | 記載しない |
 | 実運用の接続先 | 役割ベースで説明 |
 | 業務PPTX原本 | リポジトリに含めない |
