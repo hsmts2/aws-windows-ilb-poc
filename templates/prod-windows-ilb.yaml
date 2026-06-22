@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Production-like anonymized AWS Windows Server internal load balancer PoC.
+  Production AWS Windows Server internal load balancer PoC.
   This template uses public-safe names and sample parameters only.
 
 Parameters:
@@ -21,7 +21,7 @@ Parameters:
   VpcCidr:
     Type: String
     Default: 172.28.32.0/20
-    Description: CIDR block for the production-like VPC.
+    Description: CIDR block for the production VPC.
 
   PublicSubnetACidr:
     Type: String

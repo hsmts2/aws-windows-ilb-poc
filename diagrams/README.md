@@ -7,4 +7,4 @@
 | ファイル | 内容 |
 | --- | --- |
 | [windows-ilb-validation-architecture.svg](windows-ilb-validation-architecture.svg) | 検証環境の公開用構成図 |
-| [windows-ilb-production-architecture.svg](windows-ilb-production-architecture.svg) | 本番相当環境の公開用構成図 |
+| [windows-ilb-production-architecture.svg](windows-ilb-production-architecture.svg) | 本番環境の公開用構成図 |

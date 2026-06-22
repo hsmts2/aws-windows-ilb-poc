@@ -27,11 +27,11 @@
 
 <br>
 
-## 本番相当環境
+## 本番環境
 
-<img src="../diagrams/windows-ilb-production-architecture.svg" alt="Production-like Windows ILB architecture" width="900">
+<img src="../diagrams/windows-ilb-production-architecture.svg" alt="Production Windows ILB architecture" width="900">
 
-本番相当環境は、2AZ 構成、NAT Gateway x2、Linux / Windows Server の複数台構成、RDS Multi-AZ を前提にしています。
+本番環境は、2AZ 構成、NAT Gateway x2、Linux / Windows Server の複数台構成、RDS Multi-AZ を前提にしています。
 
 | 項目 | 内容 |
 | --- | --- |
@@ -49,7 +49,7 @@
 
 ## 環境差分
 
-| 観点 | 検証環境 | 本番相当環境 |
+| 観点 | 検証環境 | 本番環境 |
 | --- | --- | --- |
 | 目的 | 接続経路、アプリケーション動作、DB接続の確認 | 可用性、運用性、障害時の影響範囲を考慮した構成 |
 | サーバー台数 | Linux / Windows をそれぞれ最小構成 | Linux / Windows をそれぞれ 2AZ に配置 |
@@ -62,7 +62,7 @@
 
 ## 内部ロードバランサーの設計意図
 
-本番相当環境で内部ロードバランサーを利用する主な理由は、外部公開しない業務アプリケーション層に対して、安定した内部接続先を提供するためです。
+本番環境で内部ロードバランサーを利用する主な理由は、外部公開しない業務アプリケーション層に対して、安定した内部接続先を提供するためです。
 
 | 理由 | 内容 |
 | --- | --- |
@@ -92,21 +92,10 @@
 
 ## CloudFormation サンプルの補足
 
-[templates/prod-windows-ilb.yaml](../templates/prod-windows-ilb.yaml) では、本番相当環境をもとにした構成を作成します。
+[templates/validation-windows-ilb.yaml](../templates/validation-windows-ilb.yaml) では、検証環境をもとにした最小構成を作成します。
+
+[templates/prod-windows-ilb.yaml](../templates/prod-windows-ilb.yaml) では、本番環境をもとにした複数台構成を作成します。
 
 Linux Server には Apache HTTP Server、Windows Server には IIS と簡易HTMLを配置します。
 
 これは公開用 PoC として、Internal Load Balancer のヘルスチェックと振り分けを確認しやすくするための最小実装です。実務構成のアプリケーションや設定を再現するものではありません。
-
-<br>
-
-## 公開用に抽象化した点
-
-| 実務構成に含まれる可能性がある情報 | 公開用での扱い |
-| --- | --- |
-| 実リソース名 | 役割ベースのサンプル名へ置換 |
-| EC2インスタンスID | 記載しない |
-| グローバルIPアドレス | 記載しない |
-| 顧客名 / 案件名 / 拠点名 | 記載しない |
-| 実運用の接続先 | 役割ベースで説明 |
-| 業務PPTX原本 | リポジトリに含めない |
