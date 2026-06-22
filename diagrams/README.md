@@ -4,5 +4,5 @@
 
 | ファイル | 内容 |
 | --- | --- |
-| [windows-ilb-stg-architecture.svg](windows-ilb-stg-architecture.svg) | 検証環境の構成図 |
-| [windows-ilb-production-architecture.svg](windows-ilb-production-architecture.svg) | 本番環境の構成図 |
+| [aws-windows-ilb-poc-stg-architecture.png](aws-windows-ilb-poc-stg-architecture.png) | 検証環境の構成図 |
+| [aws-windows-ilb-poc-prod-architecture.png](aws-windows-ilb-poc-prod-architecture.png) | 本番環境の構成図 |

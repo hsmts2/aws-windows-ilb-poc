@@ -8,7 +8,7 @@
 
 ## 検証環境
 
-<img src="../diagrams/windows-ilb-stg-architecture.svg" alt="Staging Windows ILB architecture" width="900">
+<img src="../diagrams/aws-windows-ilb-poc-stg-architecture.png" alt="Staging Windows ILB architecture" width="900">
 
 検証環境は、接続経路、アプリケーション動作、DB接続を確認するための最小構成です。
 
@@ -27,7 +27,7 @@
 
 ## 本番環境
 
-<img src="../diagrams/windows-ilb-production-architecture.svg" alt="Production Windows ILB architecture" width="900">
+<img src="../diagrams/aws-windows-ilb-poc-prod-architecture.png" alt="Production Windows ILB architecture" width="900">
 
 本番環境は、2AZ 構成、NAT Gateway x2、Linux / Windows Server の複数台構成、RDS Multi-AZ を前提にしています。
 
