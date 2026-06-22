@@ -88,5 +88,5 @@
   <path d="M850 450 C850 470, 850 495, 850 535" class="dash" />
   <path d="M620 535 C660 535, 680 535, 710 535" class="dash" />
 
-  <text x="48" y="705" class="text tiny">Public-safe names are used. Instance IDs, public IPs, customer names, and project-specific identifiers are intentionally omitted.</text>
+  <text x="48" y="705" class="text tiny">Production topology: redundant NAT gateways, Linux / Windows servers, internal load balancers, and Multi-AZ RDS.</text>
 </svg>

@@ -8,6 +8,14 @@
     "ParameterValue": "stg"
   },
   {
+    "ParameterKey": "AvailabilityZoneA",
+    "ParameterValue": "ap-northeast-1a"
+  },
+  {
+    "ParameterKey": "AvailabilityZoneC",
+    "ParameterValue": "ap-northeast-1c"
+  },
+  {
     "ParameterKey": "AllowedAdminCidr",
     "ParameterValue": "<YOUR_ADMIN_IP>/32"
   },

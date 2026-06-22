@@ -1,10 +1,8 @@
 # diagrams
 
-このディレクトリには、公開用に作成し直した構成図を配置します。
-
-業務PPTX原本、実リソース名、EC2インスタンスID、グローバルIPアドレス、顧客情報を含む図は配置しません。
+このディレクトリには、構成図を配置します。
 
 | ファイル | 内容 |
 | --- | --- |
-| [windows-ilb-validation-architecture.svg](windows-ilb-validation-architecture.svg) | 検証環境の公開用構成図 |
-| [windows-ilb-production-architecture.svg](windows-ilb-production-architecture.svg) | 本番環境の公開用構成図 |
+| [windows-ilb-stg-architecture.svg](windows-ilb-stg-architecture.svg) | 検証環境の構成図 |
+| [windows-ilb-production-architecture.svg](windows-ilb-production-architecture.svg) | 本番環境の構成図 |

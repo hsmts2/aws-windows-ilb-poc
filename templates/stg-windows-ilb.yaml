@@ -1,15 +1,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Validation AWS Windows Server internal load balancer PoC.
-  This template uses public-safe names and sample parameters only.
+  Staging AWS Windows Server internal load balancer PoC.
+  This template uses sample parameters only.
 
 Parameters:
   ProjectName:
     Type: String
     Default: aws-windows-ilb-poc
+    MinLength: 3
     MaxLength: 19
     AllowedPattern: '^[a-z0-9-]+$'
-    Description: Prefix used for resource names.
+    Description: Prefix used for resource names. Keep it within 19 characters because ALB and target group names have a 32-character limit.
 
   EnvironmentName:
     Type: String
@@ -18,10 +19,20 @@ Parameters:
     AllowedPattern: '^[a-z0-9-]+$'
     Description: Environment identifier used for tags and names.
 
+  AvailabilityZoneA:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: ap-northeast-1a
+    Description: Availability Zone for A-side public, private application, and private DB subnets.
+
+  AvailabilityZoneC:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: ap-northeast-1c
+    Description: Availability Zone for C-side public, private application, and private DB subnets.
+
   VpcCidr:
     Type: String
     Default: 172.28.48.0/20
-    Description: CIDR block for the validation VPC.
+    Description: CIDR block for the staging VPC.
 
   PublicSubnetACidr:
     Type: String
@@ -120,7 +131,7 @@ Parameters:
     Default: postgres
     AllowedValues:
       - postgres
-    Description: RDS engine for this public PoC template.
+    Description: RDS engine for this PoC template.
 
   DbEngineVersion:
     Type: String
@@ -189,7 +200,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref Vpc
-      AvailabilityZone: !Select [0, !GetAZs '']
+      AvailabilityZone: !Ref AvailabilityZoneA
       CidrBlock: !Ref PublicSubnetACidr
       MapPublicIpOnLaunch: true
       Tags:
@@ -200,7 +211,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref Vpc
-      AvailabilityZone: !Select [1, !GetAZs '']
+      AvailabilityZone: !Ref AvailabilityZoneC
       CidrBlock: !Ref PublicSubnetCCidr
       MapPublicIpOnLaunch: true
       Tags:
@@ -211,45 +222,45 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref Vpc
-      AvailabilityZone: !Select [0, !GetAZs '']
+      AvailabilityZone: !Ref AvailabilityZoneA
       CidrBlock: !Ref PrivateAppSubnetACidr
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub '${ProjectName}-${EnvironmentName}-private-app-subnet-a'
+          Value: !Sub '${ProjectName}-${EnvironmentName}-app-subnet-a'
 
   PrivateAppSubnetC:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref Vpc
-      AvailabilityZone: !Select [1, !GetAZs '']
+      AvailabilityZone: !Ref AvailabilityZoneC
       CidrBlock: !Ref PrivateAppSubnetCCidr
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub '${ProjectName}-${EnvironmentName}-private-app-subnet-c'
+          Value: !Sub '${ProjectName}-${EnvironmentName}-app-subnet-c'
 
   PrivateDbSubnetA:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref Vpc
-      AvailabilityZone: !Select [0, !GetAZs '']
+      AvailabilityZone: !Ref AvailabilityZoneA
       CidrBlock: !Ref PrivateDbSubnetACidr
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub '${ProjectName}-${EnvironmentName}-private-db-subnet-a'
+          Value: !Sub '${ProjectName}-${EnvironmentName}-db-subnet-a'
 
   PrivateDbSubnetC:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref Vpc
-      AvailabilityZone: !Select [1, !GetAZs '']
+      AvailabilityZone: !Ref AvailabilityZoneC
       CidrBlock: !Ref PrivateDbSubnetCCidr
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub '${ProjectName}-${EnvironmentName}-private-db-subnet-c'
+          Value: !Sub '${ProjectName}-${EnvironmentName}-db-subnet-c'
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable

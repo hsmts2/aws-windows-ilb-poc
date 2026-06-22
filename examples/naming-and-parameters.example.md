@@ -2,25 +2,36 @@
 
 ## 概要
 
-公開用リポジトリでは、実環境の名称や ID を使用せず、役割が分かるサンプル名に置き換えます。
-
-CIDR は、構成差分を説明しやすくするため、検証環境と本番環境のレンジを公開用の設計値として記載します。
+このドキュメントでは、CloudFormation で作成される主なリソース名と、検証環境・本番環境の CIDR 例を整理します。
 
 <br>
 
 ## 命名例
 
+CloudFormation のデフォルト値でデプロイした場合、主な Name タグとリソース名は以下になります。
+
 | 種別 | 検証環境 | 本番環境 |
 | --- | --- | --- |
-| VPC | `validation-vpc` | `production-vpc` |
-| Public Subnet | `validation-public-subnet-a` | `production-public-subnet-a` |
-| Private App Subnet | `validation-private-app-subnet-a` | `production-private-app-subnet-a` |
-| Private DB Subnet | `validation-private-db-subnet-a` | `production-private-db-subnet-a` |
-| Linux Server | `validation-linux-app-01` | `production-linux-app-01` |
-| Windows Server | `validation-windows-app-01` | `production-windows-app-01` |
-| Internal ALB | `validation-windows-ilb` | `production-windows-ilb` |
-| Bastion Host | `validation-bastion-01` | `production-bastion-01` |
-| RDS | `validation-db` | `production-db` |
+| VPC | `aws-windows-ilb-poc-stg-vpc` | `aws-windows-ilb-poc-prod-vpc` |
+| Internet Gateway | `aws-windows-ilb-poc-stg-igw` | `aws-windows-ilb-poc-prod-igw` |
+| Public Subnet A | `aws-windows-ilb-poc-stg-public-subnet-a` | `aws-windows-ilb-poc-prod-public-subnet-a` |
+| Public Subnet C | `aws-windows-ilb-poc-stg-public-subnet-c` | `aws-windows-ilb-poc-prod-public-subnet-c` |
+| App Subnet A | `aws-windows-ilb-poc-stg-app-subnet-a` | `aws-windows-ilb-poc-prod-app-subnet-a` |
+| App Subnet C | `aws-windows-ilb-poc-stg-app-subnet-c` | `aws-windows-ilb-poc-prod-app-subnet-c` |
+| DB Subnet A | `aws-windows-ilb-poc-stg-db-subnet-a` | `aws-windows-ilb-poc-prod-db-subnet-a` |
+| DB Subnet C | `aws-windows-ilb-poc-stg-db-subnet-c` | `aws-windows-ilb-poc-prod-db-subnet-c` |
+| NAT Gateway A | `aws-windows-ilb-poc-stg-nat-a` | `aws-windows-ilb-poc-prod-nat-a` |
+| NAT Gateway C | なし | `aws-windows-ilb-poc-prod-nat-c` |
+| Bastion Host | `aws-windows-ilb-poc-stg-bastion-01` | `aws-windows-ilb-poc-prod-bastion-01` |
+| Linux Server 01 | `aws-windows-ilb-poc-stg-linux-app-01` | `aws-windows-ilb-poc-prod-linux-app-01` |
+| Linux Server 02 | なし | `aws-windows-ilb-poc-prod-linux-app-02` |
+| Windows Server 01 | `aws-windows-ilb-poc-stg-windows-app-01` | `aws-windows-ilb-poc-prod-windows-app-01` |
+| Windows Server 02 | なし | `aws-windows-ilb-poc-prod-windows-app-02` |
+| Linux Internal ALB | `aws-windows-ilb-poc-stg-app-ilb` | `aws-windows-ilb-poc-prod-app-ilb` |
+| Windows Internal ALB | `aws-windows-ilb-poc-stg-win-ilb` | `aws-windows-ilb-poc-prod-win-ilb` |
+| Linux Target Group | `aws-windows-ilb-poc-stg-app-tg` | `aws-windows-ilb-poc-prod-app-tg` |
+| Windows Target Group | `aws-windows-ilb-poc-stg-win-tg` | `aws-windows-ilb-poc-prod-win-tg` |
+| RDS | `aws-windows-ilb-poc-stg-db` | `aws-windows-ilb-poc-prod-db` |
 
 <br>
 
@@ -63,16 +74,3 @@ CIDR は、構成差分を説明しやすくするため、検証環境と本番
 | RDS パスワード | `<YOUR_DB_MASTER_PASSWORD>` |
 
 <br>
-
-## 匿名化ルール
-
-| 実情報 | 公開用の扱い |
-| --- | --- |
-| 実VPC名 | サンプル名へ置換 |
-| 実Subnet名 | サンプル名へ置換 |
-| 実EC2名 | 役割ベースのサンプル名へ置換 |
-| EC2インスタンスID | 記載しない |
-| グローバルIPアドレス | 記載しない |
-| 顧客名 / 案件名 / 拠点名 | 記載しない |
-| 接続先 / 通知先 | 記載しない |
-| 認証情報 | 記載しない |

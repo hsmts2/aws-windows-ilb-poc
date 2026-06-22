@@ -2,15 +2,13 @@
 
 ## 概要
 
-このドキュメントでは、Windows Server と内部ロードバランサーを含む AWS 基盤構成を、公開可能なケーススタディとして整理します。
-
-実環境のリソース名、インスタンス ID、グローバル IP、顧客情報、拠点情報は記載せず、構成要素と設計意図が伝わる範囲に抽象化しています。
+このドキュメントでは、Windows Server と内部ロードバランサーを含む AWS 基盤構成を、ケーススタディとして整理します。
 
 <br>
 
 ## 検証環境
 
-<img src="../diagrams/windows-ilb-validation-architecture.svg" alt="Validation Windows ILB architecture" width="900">
+<img src="../diagrams/windows-ilb-stg-architecture.svg" alt="Staging Windows ILB architecture" width="900">
 
 検証環境は、接続経路、アプリケーション動作、DB接続を確認するための最小構成です。
 
@@ -92,10 +90,10 @@
 
 ## CloudFormation サンプルの補足
 
-[templates/validation-windows-ilb.yaml](../templates/validation-windows-ilb.yaml) では、検証環境をもとにした最小構成を作成します。
+[templates/stg-windows-ilb.yaml](../templates/stg-windows-ilb.yaml) では、検証環境をもとにした最小構成を作成します。
 
 [templates/prod-windows-ilb.yaml](../templates/prod-windows-ilb.yaml) では、本番環境をもとにした複数台構成を作成します。
 
 Linux Server には Apache HTTP Server、Windows Server には IIS と簡易HTMLを配置します。
 
-これは公開用 PoC として、Internal Load Balancer のヘルスチェックと振り分けを確認しやすくするための最小実装です。実務構成のアプリケーションや設定を再現するものではありません。
+これは PoC として、Internal Load Balancer のヘルスチェックと振り分けを確認しやすくするための最小実装です。
