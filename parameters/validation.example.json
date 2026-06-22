@@ -1,0 +1,34 @@
+[
+  {
+    "ParameterKey": "ProjectName",
+    "ParameterValue": "aws-windows-ilb-poc"
+  },
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "stg"
+  },
+  {
+    "ParameterKey": "AllowedAdminCidr",
+    "ParameterValue": "<YOUR_ADMIN_IP>/32"
+  },
+  {
+    "ParameterKey": "KeyName",
+    "ParameterValue": "<YOUR_KEY_NAME>"
+  },
+  {
+    "ParameterKey": "LinuxAmiId",
+    "ParameterValue": "<YOUR_AL2023_AMI_ID>"
+  },
+  {
+    "ParameterKey": "WindowsAmiId",
+    "ParameterValue": "<YOUR_WINDOWS_AMI_ID>"
+  },
+  {
+    "ParameterKey": "DbMasterPassword",
+    "ParameterValue": "<YOUR_DB_MASTER_PASSWORD>"
+  },
+  {
+    "ParameterKey": "DbPort",
+    "ParameterValue": "5432"
+  }
+]
