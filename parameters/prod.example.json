@@ -16,12 +16,12 @@
     "ParameterValue": "<YOUR_KEY_NAME>"
   },
   {
-    "ParameterKey": "WindowsAmiId",
-    "ParameterValue": "<YOUR_WINDOWS_AMI_ID>"
+    "ParameterKey": "LinuxAmiId",
+    "ParameterValue": "<YOUR_AL2023_AMI_ID>"
   },
   {
-    "ParameterKey": "BastionAmiId",
-    "ParameterValue": "<YOUR_WINDOWS_BASTION_AMI_ID>"
+    "ParameterKey": "WindowsAmiId",
+    "ParameterValue": "<YOUR_WINDOWS_AMI_ID>"
   },
   {
     "ParameterKey": "DbMasterPassword",
@@ -29,6 +29,10 @@
   },
   {
     "ParameterKey": "DbPort",
-    "ParameterValue": "3306"
+    "ParameterValue": "5432"
+  },
+  {
+    "ParameterKey": "DbMultiAz",
+    "ParameterValue": "true"
   }
 ]
